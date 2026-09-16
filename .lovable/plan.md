@@ -1,12 +1,14 @@
 # Gerador de Propostas — Templar Engenharia
 
 ## Objetivo
-Substituir o sistema atual por uma ferramenta interna, em português, para criar, editar, visualizar e exportar propostas técnicas da Templar Engenharia. O documento seguirá o formato A4 institucional, será salvo automaticamente no navegador e não terá login nem histórico público.
+Substituir o sistema atual por uma ferramenta interna, em português, para criar, editar, visualizar e exportar propostas técnicas da Templar Engenharia. O documento seguirá o formato A4 institucional, terá acesso por e-mail e senha, salvamento automático durante a edição e uma lista central registrada no Google Sheets.
 
 ## Experiência principal
 
 ### Página inicial
+- Exigir login interno por e-mail e senha, sem cadastro público.
 - Apresentar a identidade da Templar Engenharia e o botão **Nova proposta**.
+- Exibir uma lista privada e pesquisável das propostas registradas na planilha central, com número, data, cliente, serviço, imóvel, valor, prazo, status e link do PDF.
 - Exibir os 14 serviços técnicos em uma grade única, na ordem definida.
 - Criar imediatamente uma proposta ao selecionar um serviço.
 - Abrir um assistente de três etapas para cliente, imóvel, valores e prazos.
@@ -28,7 +30,10 @@ Substituir o sistema atual por uma ferramenta interna, em português, para criar
 - Reservar áreas de assinatura para contratante e responsável técnico.
 
 ## Dados e regras comerciais
-- Salvar propostas automaticamente no navegador sob `templar-proposals-v1`.
+- Salvar propostas automaticamente no navegador sob `templar-proposals-v1` enquanto estão sendo editadas.
+- Registrar o resumo de cada proposta em uma única planilha Google Sheets da empresa, usando uma conexão administrativa segura.
+- Atualizar a mesma linha ao salvar novamente uma proposta, evitando duplicações pelo identificador interno.
+- Enviar o PDF final para armazenamento privado da aplicação e gravar na planilha uma referência segura para acesso ao arquivo.
 - Manter contador sequencial local sob `templar-proposals-counter-v1`, retomando o último número salvo e permitindo edição manual.
 - Iniciar valores em zero.
 - Usar como condição padrão: 50% no aceite para agendamento e 50% na entrega do laudo.
@@ -42,6 +47,13 @@ Substituir o sistema atual por uma ferramenta interna, em português, para criar
 - Exibir o resultado como sugestão pendente, com **Aplicar** e **Descartar**; nunca alterar o texto automaticamente.
 - Mostrar erros de configuração, limite ou indisponibilidade de forma clara, preservando o conteúdo digitado.
 - Configurar a credencial Gemini somente após a função estar pronta.
+
+## Acesso e integração com Google Sheets
+- Implementar login interno com e-mail e senha e proteger todas as páginas do gerador.
+- Não oferecer criação pública de contas; os usuários autorizados serão cadastrados pelo responsável da aplicação.
+- Conectar uma única conta Google da empresa e usar sua planilha como índice compartilhado das propostas.
+- Criar a estrutura de colunas automaticamente quando necessário e manter leitura e gravação sob demanda, sem consultas repetitivas.
+- Exibir falhas de acesso à planilha sem apagar a proposta local nem impedir sua exportação.
 
 ## Exportação em PDF
 - Carregar `html-to-image` e `jspdf` apenas no momento da exportação.
@@ -60,19 +72,22 @@ Substituir o sistema atual por uma ferramenta interna, em português, para criar
 - Migrar para React 19, Vite 7 e Tailwind CSS 4 configurado em `src/styles.css`, sem `tailwind.config.js`.
 - Usar React Router, Zustand com persistência, nanoid, lucide-react, html-to-image e jspdf.
 - Usar componentes próprios, removendo dependência visual de shadcn/ui e toda a experiência anterior de login, WhatsApp e administração.
-- Manter o aplicativo cliente sem banco de dados; a única função remota será o intermediário seguro para o Gemini.
+- Usar o backend apenas para autenticação, armazenamento privado dos PDFs, Gemini e acesso seguro ao Google Sheets; o conteúdo editável permanece salvo localmente.
 - Atualizar título, descrição, idioma e metadados sociais da aplicação.
 
 ## Validação
+- Verificar login, bloqueio das páginas privadas e encerramento de sessão.
 - Verificar criação pelos 14 serviços e pelo assistente de três etapas.
 - Confirmar atualização instantânea, persistência após recarregar e numeração sequencial editável.
 - Testar visibilidade e ordem das seções, upload do logotipo, cores e cálculos comerciais.
 - Testar o ciclo completo da IA: gerar, revisar, aplicar e descartar.
+- Testar criação e atualização da linha na planilha central e abertura do PDF associado.
 - Exportar e inspecionar visualmente o PDF A4 em múltiplas páginas.
 - Conferir a interface em desktop e celular, além de erros de execução e compilação.
 
 ## Premissas registradas
-- Não haverá login, banco remoto ou painel público de propostas.
+- Não haverá cadastro público nem painel público de propostas.
+- A planilha Google Sheets será central, pertencente à conta administrativa conectada ao projeto.
 - O último número conhecido será o contador salvo neste navegador; sem banco remoto, outro dispositivo não consegue descobri-lo automaticamente.
 - Valores começam zerados e os prazos permanecem para preenchimento manual.
 - A cor oficial poderá ser escolhida no editor; nenhuma cor institucional definitiva será presumida.
