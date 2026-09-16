@@ -1,29 +1,78 @@
-Remover o input de nome da instância Uazapi sem quebrar o backend
+# Gerador de Propostas — Templar Engenharia
 
-Objetivo: deixar o cadastro de instância Uazapi mais simples, removendo o campo "Nome da instância" do drawer de configuração e do admin, sem quebrar as edge functions que usam o nome como identificador.
+## Objetivo
+Substituir o sistema atual por uma ferramenta interna, em português, para criar, editar, visualizar e exportar propostas técnicas da Templar Engenharia. O documento seguirá o formato A4 institucional, será salvo automaticamente no navegador e não terá login nem histórico público.
 
-Abordagem escolhida: enviar um nome padrão ("principal") automaticamente, mantendo a coluna `whatsapp_instances.name` NOT NULL e a lógica do webhook inalterada. Isso evita alterações de schema e migração de dados.
+## Experiência principal
 
-Passos:
+### Página inicial
+- Apresentar a identidade da Templar Engenharia e o botão **Nova proposta**.
+- Exibir os 14 serviços técnicos em uma grade única, na ordem definida.
+- Criar imediatamente uma proposta ao selecionar um serviço.
+- Abrir um assistente de três etapas para cliente, imóvel, valores e prazos.
+- Incluir **Pular e começar do zero**, usando Avaliação de Imóveis como modelo inicial.
 
-1. Frontend — ConfigDrawer.tsx
-   - Remover o input de "Nome da instância" e o texto auxiliar.
-   - Remover a validação que exige `instanceName.trim()`.
-   - No payload de insert/update de `whatsapp_instances`, enviar `name: "principal"` (ou o nome já salvo, se existir) ao invés de `instanceName.trim()`.
+### Editor
+- Criar uma área fixa de edição e uma visualização A4 em tempo real.
+- Organizar os campos em grupos recolhíveis: Marca, Identificação, Responsável Técnico, Cliente, Imóvel, Seções, Conteúdo Técnico, Valores e Fechamento.
+- Permitir anexar logotipo PNG/JPEG e escolher cores da marca no próprio editor.
+- Permitir ativar, desativar e reordenar as 12 seções oficiais.
+- Em telas menores, alternar entre **Editar** e **Visualizar proposta**.
+- Exibir aviso e retorno à página inicial quando a proposta não existir.
 
-2. Frontend — admin/UazapiConfig.tsx
-   - O admin já usa `DEFAULT_INSTANCE_NAME = "principal"`. Garantir que o insert continue funcionando e que o input não seja necessário.
+### Documento institucional
+- Criar capa e páginas A4 claras com cabeçalho e rodapé reais em todas as folhas.
+- Reproduzir a ordem oficial das 12 seções, com hierarquia tipográfica técnica e limpa.
+- Inserir os dados fixos da empresa, responsável técnico, slogan e contatos.
+- Carregar o conteúdo específico completo dos 14 serviços, incluindo exclusões próprias e gerais.
+- Reservar áreas de assinatura para contratante e responsável técnico.
 
-3. Edge functions — nenhuma alteração
-   - `whatsapp-webhook` continua encontrando a instância por token; se por nome, usará "principal".
-   - `manage-instance` action `create` continua recebendo um nome (agora enviado pelo frontend como "principal" se ausente).
+## Dados e regras comerciais
+- Salvar propostas automaticamente no navegador sob `templar-proposals-v1`.
+- Manter contador sequencial local sob `templar-proposals-counter-v1`, retomando o último número salvo e permitindo edição manual.
+- Iniciar valores em zero.
+- Usar como condição padrão: 50% no aceite para agendamento e 50% na entrega do laudo.
+- Calcular automaticamente percentuais, valores de sinal/saldo, parcelas e datas de validade.
+- Implementar as funções de moeda e datas brasileiras e os controles criar, atualizar, remover e criar a partir de modelo.
 
-4. Teste
-   - Salvar configuração Uazapi pelo drawer sem preencher nome (input removido) e confirmar que o registro é criado/atualizado com `name = 'principal'`.
-   - Verificar se webhook de mensagem ainda associa ao usuário correto.
+## Assistente técnico com IA
+- Adicionar **Gerar com IA** nos blocos Objetivo, Itens Constantes, Metodologia, Entregáveis e Não Incluído.
+- Enviar para a IA o serviço, o objeto, as observações e o conteúdo atual, usando integralmente as regras técnicas fornecidas.
+- Fazer a chamada por uma função segura para que a chave do Gemini não apareça no navegador.
+- Exibir o resultado como sugestão pendente, com **Aplicar** e **Descartar**; nunca alterar o texto automaticamente.
+- Mostrar erros de configuração, limite ou indisponibilidade de forma clara, preservando o conteúdo digitado.
+- Configurar a credencial Gemini somente após a função estar pronta.
 
-Riscos e observações:
-   - Se o usuário quiser ter mais de uma instância por conta, o nome padrão único pode conflitar. Nesta versão, a regra é uma instância por usuário, então "principal" é suficiente.
-   - O webhook ainda faz fallback por nome, então se a Uazapi enviar um nome diferente, ele tenta normalizar/match; o nome salvo é corrigido automaticamente após a primeira mensagem.
+## Exportação em PDF
+- Carregar `html-to-image` e `jspdf` apenas no momento da exportação.
+- Capturar cada página A4 separadamente com pixel ratio 2,5.
+- Exibir bloqueio com progresso durante a geração.
+- Baixar como `proposta-<numero>-<cliente>.pdf`.
+- Garantir cabeçalhos, rodapés, alinhamentos e quebras consistentes.
 
-Nenhuma alteração de schema é necessária.
+## Direção visual
+- Interface operacional escura, sóbria e precisa, inspirada em pranchetas e documentação pericial.
+- Documento sempre branco e institucional, com cor de destaque configurável.
+- Marca inicial tipográfica neutra até o usuário anexar o logotipo oficial.
+- Evitar aparência genérica de painel, excesso de cartões e efeitos decorativos.
+
+## Implementação técnica
+- Migrar para React 19, Vite 7 e Tailwind CSS 4 configurado em `src/styles.css`, sem `tailwind.config.js`.
+- Usar React Router, Zustand com persistência, nanoid, lucide-react, html-to-image e jspdf.
+- Usar componentes próprios, removendo dependência visual de shadcn/ui e toda a experiência anterior de login, WhatsApp e administração.
+- Manter o aplicativo cliente sem banco de dados; a única função remota será o intermediário seguro para o Gemini.
+- Atualizar título, descrição, idioma e metadados sociais da aplicação.
+
+## Validação
+- Verificar criação pelos 14 serviços e pelo assistente de três etapas.
+- Confirmar atualização instantânea, persistência após recarregar e numeração sequencial editável.
+- Testar visibilidade e ordem das seções, upload do logotipo, cores e cálculos comerciais.
+- Testar o ciclo completo da IA: gerar, revisar, aplicar e descartar.
+- Exportar e inspecionar visualmente o PDF A4 em múltiplas páginas.
+- Conferir a interface em desktop e celular, além de erros de execução e compilação.
+
+## Premissas registradas
+- Não haverá login, banco remoto ou painel público de propostas.
+- O último número conhecido será o contador salvo neste navegador; sem banco remoto, outro dispositivo não consegue descobri-lo automaticamente.
+- Valores começam zerados e os prazos permanecem para preenchimento manual.
+- A cor oficial poderá ser escolhida no editor; nenhuma cor institucional definitiva será presumida.
