@@ -52,6 +52,7 @@ Substituir o sistema atual por uma ferramenta interna, em português, para criar
 - Implementar login interno com e-mail e senha e proteger todas as páginas do gerador.
 - Não oferecer criação pública de contas; os usuários autorizados serão cadastrados pelo responsável da aplicação.
 - Conectar uma única conta Google da empresa e usar sua planilha como índice compartilhado das propostas.
+- Usar a conexão central Google Sheets já vinculada ao projeto; a planilha poderá ser criada pelo sistema ou selecionada por endereço no primeiro acesso administrativo.
 - Criar a estrutura de colunas automaticamente quando necessário e manter leitura e gravação sob demanda, sem consultas repetitivas.
 - Exibir falhas de acesso à planilha sem apagar a proposta local nem impedir sua exportação.
 
