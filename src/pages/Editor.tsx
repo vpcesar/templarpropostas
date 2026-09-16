@@ -28,7 +28,7 @@ export default function Editor() {
   const exportPdf = async () => {
     if (!previewRef.current || !user) return; setExporting(true); setProgress(10);
     try { const [{ toJpeg }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]); const pages = [...previewRef.current.querySelectorAll<HTMLElement>(".a4-page")]; const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      for (let index = 0; index < pages.length; index++) { if (index) pdf.addPage(); const image = await toJpeg(pages[index], { pixelRatio: 2.5, quality: .96, backgroundColor: "#ffffff" }); pdf.addImage(image, "JPEG", 0, 0, 210, 297, undefined, "FAST"); setProgress(15 + Math.round(((index + 1) / pages.length) * 60)); }
+      for (let index = 0; index < pages.length; index++) { if (index) pdf.addPage(); const image = await toJpeg(pages[index], { pixelRatio: 2.5, quality: .96, backgroundColor: "#ffffff", skipFonts: true }); pdf.addImage(image, "JPEG", 0, 0, 210, 297, undefined, "FAST"); setProgress(15 + Math.round(((index + 1) / pages.length) * 60)); }
       const blob = pdf.output("blob"); const filename = `proposta-${slugify(proposal.proposalNumber)}-${slugify(proposal.client.name || "cliente")}.pdf`; const path = `${user.id}/${proposal.id}/${filename}`;
       const { error } = await supabase.storage.from("proposal-pdfs").upload(path, blob, { contentType: "application/pdf", upsert: true }); if (error) throw error;
       patch({ pdfPath: path }); setProgress(85); await syncProposal({ ...proposal, pdfPath: path }); pdf.save(filename); setProgress(100); setNotice("PDF exportado e registrado na lista central.");
