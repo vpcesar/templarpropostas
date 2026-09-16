@@ -1,0 +1,53 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { nanoid } from "nanoid";
+import { commonExclusions, defaultSections, serviceTemplates } from "@/data/templates";
+import { todayIso } from "@/lib/proposal-utils";
+import type { Proposal, ServiceKey } from "@/types/proposal";
+
+const COUNTER_KEY = "templar-proposals-counter-v1";
+const nextNumber = () => {
+  const current = Number(localStorage.getItem(COUNTER_KEY) || "0") + 1;
+  localStorage.setItem(COUNTER_KEY, String(current));
+  return `PROP-${String(current).padStart(4, "0")}`;
+};
+
+const buildProposal = (serviceKey: ServiceKey): Proposal => {
+  const template = serviceTemplates.find((item) => item.key === serviceKey) ?? serviceTemplates[13];
+  const now = new Date().toISOString();
+  return {
+    id: nanoid(12), createdAt: now, updatedAt: now, proposalNumber: nextNumber(), emissionDate: todayIso(),
+    serviceKey: template.key, serviceName: template.name, status: "Rascunho",
+    brand: { primaryColor: "#b08d57", secondaryColor: "#20262d" },
+    technicalManager: { name: "Vinicius Cesar", title: "Engenheiro Civil", crea: "CREA-RJ 2024100977" },
+    client: { name: "", document: "", email: "", phone: "" },
+    property: { address: "", complement: "", description: "" },
+    sections: defaultSections.map(([id, label]) => ({ id, label, enabled: true })),
+    cover: { title: template.name.toUpperCase(), subtitle: "PROPOSTA COMERCIAL TÉCNICA" },
+    scopeObjective: template.objective, scopeItems: template.scopeItems, methodology: template.methodology,
+    deliverables: template.deliverables, notIncluded: template.notIncluded, commonExclusions,
+    pricing: { totalValue: 0, payMode: "percentual", signalPercent: 50, installments: 1, pixDiscount: 0, validityDays: 10, executionDays: 0 },
+    closingMessage: "Permanecemos à disposição para os esclarecimentos necessários e para o agendamento do serviço.",
+    ctaText: "Aceite da proposta", observations: ""
+  };
+};
+
+interface ProposalState {
+  proposals: Proposal[];
+  createFromTemplate: (serviceKey: ServiceKey) => Proposal;
+  update: (id: string, changes: Partial<Proposal>) => void;
+  remove: (id: string) => void;
+  get: (id: string) => Proposal | undefined;
+}
+
+export const useProposalStore = create<ProposalState>()(persist((set, get) => ({
+  proposals: [],
+  createFromTemplate: (serviceKey) => {
+    const proposal = buildProposal(serviceKey);
+    set((state) => ({ proposals: [proposal, ...state.proposals] }));
+    return proposal;
+  },
+  update: (id, changes) => set((state) => ({ proposals: state.proposals.map((proposal) => proposal.id === id ? { ...proposal, ...changes, updatedAt: new Date().toISOString() } : proposal) })),
+  remove: (id) => set((state) => ({ proposals: state.proposals.filter((proposal) => proposal.id !== id) })),
+  get: (id) => get().proposals.find((proposal) => proposal.id === id),
+}), { name: "templar-proposals-v1" }));
