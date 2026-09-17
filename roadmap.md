@@ -8,3 +8,4 @@
 - [x] Validar desktop, celular, persistência, integração e PDF.
 - [x] Adicionar Configurações para logotipo padrão e chave Gemini segura.
 - [x] Atualizar o assistente e o teste de conexão para o Gemini 3.6 Flash.
+- [x] Reduzir leituras do Google Sheets e manter a tela funcional durante limites temporários.
