@@ -7,3 +7,4 @@
 - [x] Implementar o assistente técnico por IA com função segura.
 - [x] Validar desktop, celular, persistência, integração e PDF.
 - [x] Adicionar Configurações para logotipo padrão e chave Gemini segura.
+- [x] Atualizar o assistente e o teste de conexão para o Gemini 3.6 Flash.

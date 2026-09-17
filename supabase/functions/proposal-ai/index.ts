@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const { data: credential } = await admin.from("gemini_credentials").select("encrypted_api_key").eq("user_id", user.id).maybeSingle();
     if (!credential) return json({ error: "Configure a chave Gemini em Configurações antes de usar o assistente." }, 400);
     const apiKey = await decryptCredential(credential.encrypted_api_key);
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.25 } }) });
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.25 } }) });
     if (!response.ok) { const failure = await response.json().catch(() => null); return json({ error: failure?.error?.message || `O Gemini retornou erro ${response.status}` }, response.status); }
     const result = await response.json();
     return json({ text: result.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("") ?? "" });
