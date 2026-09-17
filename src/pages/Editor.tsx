@@ -24,7 +24,7 @@ export default function Editor() {
   if (!proposal || !id) return <Navigate to="/nao-encontrada" replace />;
   const patch = (changes: Partial<Proposal>) => update(id, changes); const toggle = (group: string) => setOpen((items) => items.includes(group) ? items.filter((item) => item !== group) : [...items, group]);
   const save = async () => { setNotice("Salvando na lista central..."); try { await syncProposal(proposal); setNotice("Proposta salva no navegador e na lista central."); } catch { setNotice("Salva neste navegador. A lista central não pôde ser atualizada."); } setTimeout(() => setNotice(""), 4000); };
-  const runAI = async (field: string) => { setAiField(field); try { setSuggestion({ field, text: await generateTechnicalText(proposal, field) }); } catch { setNotice("O assistente técnico está indisponível. Seu texto foi preservado."); } finally { setAiField(null); } };
+  const runAI = async (field: string) => { setAiField(field); try { setSuggestion({ field, text: await generateTechnicalText(proposal, field) }); } catch (error) { setNotice(error instanceof Error ? error.message : "O assistente técnico está indisponível. Seu texto foi preservado."); } finally { setAiField(null); } };
   const exportPdf = async () => {
     if (!previewRef.current || !user) return; setExporting(true); setProgress(10);
     try { const [{ toJpeg }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]); const pages = [...previewRef.current.querySelectorAll<HTMLElement>(".a4-page")]; const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
