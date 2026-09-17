@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { commonExclusions, defaultSections, serviceTemplates } from "@/data/templates";
 import { todayIso } from "@/lib/proposal-utils";
 import type { Proposal, ServiceKey } from "@/types/proposal";
+import { useSettingsStore } from "@/store/settings";
 
 const COUNTER_KEY = "templar-proposals-counter-v1";
 const nextNumber = () => {
@@ -18,7 +19,7 @@ const buildProposal = (serviceKey: ServiceKey): Proposal => {
   return {
     id: nanoid(12), createdAt: now, updatedAt: now, proposalNumber: nextNumber(), emissionDate: todayIso(),
     serviceKey: template.key, serviceName: template.name, status: "Rascunho",
-    brand: { primaryColor: "#b08d57", secondaryColor: "#20262d" },
+    brand: { logo: useSettingsStore.getState().defaultLogo, primaryColor: "#b08d57", secondaryColor: "#20262d" },
     technicalManager: { name: "Vinicius Cesar", title: "Engenheiro Civil", crea: "CREA-RJ 2024100977" },
     client: { name: "", document: "", email: "", phone: "" },
     property: { address: "", complement: "", description: "" },
@@ -37,6 +38,7 @@ interface ProposalState {
   createFromTemplate: (serviceKey: ServiceKey) => Proposal;
   update: (id: string, changes: Partial<Proposal>) => void;
   remove: (id: string) => void;
+  applyDefaultLogo: (logo?: string) => void;
   get: (id: string) => Proposal | undefined;
 }
 
@@ -49,5 +51,6 @@ export const useProposalStore = create<ProposalState>()(persist((set, get) => ({
   },
   update: (id, changes) => set((state) => ({ proposals: state.proposals.map((proposal) => proposal.id === id ? { ...proposal, ...changes, updatedAt: new Date().toISOString() } : proposal) })),
   remove: (id) => set((state) => ({ proposals: state.proposals.filter((proposal) => proposal.id !== id) })),
+  applyDefaultLogo: (logo) => set((state) => ({ proposals: state.proposals.map((proposal) => ({ ...proposal, brand: { ...proposal.brand, logo }, updatedAt: new Date().toISOString() })) })),
   get: (id) => get().proposals.find((proposal) => proposal.id === id),
 }), { name: "templar-proposals-v1" }));

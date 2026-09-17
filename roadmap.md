@@ -6,4 +6,4 @@
 - [x] Implementar o editor, os 14 modelos, visualização A4 e exportação PDF.
 - [x] Implementar o assistente técnico por IA com função segura.
 - [x] Validar desktop, celular, persistência, integração e PDF.
-- [ ] Adicionar Configurações para logotipo padrão e chave Gemini segura.
+- [x] Adicionar Configurações para logotipo padrão e chave Gemini segura.
