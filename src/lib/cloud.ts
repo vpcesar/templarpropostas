@@ -23,6 +23,18 @@ export async function createPdfAccess(pdfPath: string) {
 
 export async function generateTechnicalText(proposal: Proposal, field: string) {
   const { data, error } = await supabase.functions.invoke("proposal-ai", { body: { field, service: proposal.serviceName, property: proposal.property, observations: proposal.observations, currentText: proposal[field as keyof Proposal] } });
-  if (error) throw error;
+  if (error) throw new Error(data?.error || error.message);
   return data.text as string;
+}
+
+export async function getGeminiSettings() {
+  const { data, error } = await supabase.functions.invoke("gemini-settings", { method: "GET" });
+  if (error) throw new Error(data?.error || error.message);
+  return data as { ok: boolean; configured: boolean; error?: string };
+}
+
+export async function updateGeminiSettings(action: "save" | "test" | "remove", apiKey?: string) {
+  const { data, error } = await supabase.functions.invoke("gemini-settings", { body: { action, ...(apiKey ? { apiKey } : {}) } });
+  if (error) throw new Error(data?.error || error.message);
+  return data as { ok: boolean; configured: boolean; message?: string; error?: string };
 }

@@ -5,5 +5,6 @@ import Login from "@/pages/Login";
 import Home from "@/pages/Home";
 import Editor from "@/pages/Editor";
 import ProposalNotFound from "@/pages/ProposalNotFound";
+import Settings from "@/pages/Settings";
 
-export default function App() { return <AuthProvider><BrowserRouter><Routes><Route path="/login" element={<Login />} /><Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} /><Route path="/editor/:id" element={<ProtectedRoute><Editor /></ProtectedRoute>} /><Route path="/nao-encontrada" element={<ProtectedRoute><ProposalNotFound /></ProtectedRoute>} /><Route path="*" element={<Navigate to="/" replace />} /></Routes></BrowserRouter></AuthProvider>; }
+export default function App() { return <AuthProvider><BrowserRouter><Routes><Route path="/login" element={<Login />} /><Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} /><Route path="/editor/:id" element={<ProtectedRoute><Editor /></ProtectedRoute>} /><Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} /><Route path="/nao-encontrada" element={<ProtectedRoute><ProposalNotFound /></ProtectedRoute>} /><Route path="*" element={<Navigate to="/" replace />} /></Routes></BrowserRouter></AuthProvider>; }
