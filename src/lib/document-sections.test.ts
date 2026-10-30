@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { describe, test } from "node:test";
 import { deepStrictEqual } from "node:assert";
 import { visibleSections } from "./document-sections";
