@@ -1,11 +1,12 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "node:test";
+import { deepStrictEqual } from "node:assert";
 import { visibleSections } from "./document-sections";
 
 describe("document visibility and sequence", () => {
   test("disabled sections disappear from the document", () => {
-    expect(visibleSections([{ id: "capa", label: "Capa", enabled: false }, { id: "cliente", label: "Cliente", enabled: true }]).map(s => s.id)).toEqual(["cliente"]);
+    deepStrictEqual(visibleSections([{ id: "capa", label: "Capa", enabled: false }, { id: "cliente", label: "Cliente", enabled: true }]).map(s => s.id), ["cliente"]);
   });
   test("enabled sections retain the user's order", () => {
-    expect(visibleSections([{ id: "valores", label: "Valores", enabled: true }, { id: "objetivo", label: "Objetivo", enabled: true }]).map(s => s.id)).toEqual(["valores", "objetivo"]);
+    deepStrictEqual(visibleSections([{ id: "valores", label: "Valores", enabled: true }, { id: "objetivo", label: "Objetivo", enabled: true }]).map(s => s.id), ["valores", "objetivo"]);
   });
 });
