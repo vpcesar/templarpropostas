@@ -52,12 +52,12 @@ a { color: inherit; text-decoration: none; }
   .document-content { padding: 0; }
   .document-header { position: static; margin: 0; padding: 2mm 0 4mm; min-height: 18mm; }
   .document-footer { position: static; margin: 0; padding: 3mm 0 2mm; min-height: 12mm; }
-  .document-flow-table thead { display: table-header-group; }
-  .document-flow-table tfoot { display: table-footer-group; }
-  .document-flow-table tbody, .document-flow-table tr, .document-flow-table td { break-inside: auto; }
+  .document-flow-table > thead { display: table-header-group; }
+  .document-flow-table > tfoot { display: table-footer-group; }
+  .document-flow-table > tbody, .document-flow-table > :is(thead, tbody, tfoot) > tr, .document-flow-table > :is(thead, tbody, tfoot) > tr > td { break-inside: auto; }
   .document-content { padding-top: 5mm; padding-bottom: 5mm; }
   .document-block { break-inside: auto; page-break-inside: auto; }
   .document-content .grid, .document-highlight, .document-cover { break-inside: avoid; page-break-inside: avoid; }
 }
 
-.document-flow-table { width: 100%; border-collapse: collapse; table-layout: fixed; }.document-flow-table td { padding: 0; vertical-align: top; }
+.document-flow-table { width: 100%; border-collapse: collapse; table-layout: fixed; }.document-flow-table > :is(thead, tbody, tfoot) > tr > td { padding: 0; vertical-align: top; }
