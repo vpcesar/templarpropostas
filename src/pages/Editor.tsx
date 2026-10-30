@@ -1,15 +1,12 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ChevronDown, ChevronUp, Download, Eye, GripVertical, Loader2, Monitor, Save, Sparkles, Trash2, Upload } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/Button";
 import { ProposalPreview } from "@/components/proposals/ProposalPreview";
 import { generateTechnicalText, syncProposal } from "@/lib/cloud";
-import { slugify } from "@/lib/proposal-utils";
 import { useProposalStore } from "@/store/proposals";
 import type { Proposal, ProposalStatus } from "@/types/proposal";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 const tabs = {
   "Cliente": ["Contratante", "Endereço"],
@@ -24,10 +21,10 @@ const textFields = [
 ] as const;
 
 export default function Editor() {
-  const { id } = useParams(); const navigate = useNavigate(); const { user } = useAuth();
+  const { id } = useParams(); const navigate = useNavigate();
   const proposal = useProposalStore((state) => state.proposals.find((item) => item.id === id)); const update = useProposalStore((state) => state.update); const remove = useProposalStore((state) => state.remove);
   const [tab, setTab] = useState<Tab>("Cliente"); const [open, setOpen] = useState<string[]>(["Contratante", "Endereço", "Escopo do serviço", "Plantas", "Comercial", "Responsável técnico", "Identificação"]); const [mobileMode, setMobileMode] = useState<"edit" | "preview">("edit");
-  const [notice, setNotice] = useState(""); const [exporting, setExporting] = useState(false); const [progress, setProgress] = useState(0); const [aiField, setAiField] = useState<string | null>(null); const [suggestion, setSuggestion] = useState<{ field: string; text: string } | null>(null); const previewRef = useRef<HTMLDivElement>(null);
+  const [notice, setNotice] = useState(""); const [aiField, setAiField] = useState<string | null>(null); const [suggestion, setSuggestion] = useState<{ field: string; text: string } | null>(null);
   if (!proposal || !id) return <Navigate to="/nao-encontrada" replace />;
   const patch = (changes: Partial<Proposal>) => update(id, changes);
   const setClient = (c: Partial<Proposal["client"]>) => patch({ client: { ...proposal.client, ...c } });
@@ -38,13 +35,13 @@ export default function Editor() {
   const save = async () => { setNotice("Salvando na lista central..."); try { await syncProposal(proposal); setNotice("Proposta salva no navegador e na lista central."); } catch { setNotice("Salva neste navegador. A lista central não pôde ser atualizada."); } setTimeout(() => setNotice(""), 4000); };
   const runAI = async (field: string) => { setAiField(field); try { setSuggestion({ field, text: await generateTechnicalText(proposal, field) }); } catch (error) { setNotice(error instanceof Error ? error.message : "O assistente técnico está indisponível. Seu texto foi preservado."); } finally { setAiField(null); } };
   const exportPdf = async () => {
-    if (!previewRef.current || !user) return; setExporting(true); setProgress(10);
-    try { const [{ toJpeg }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]); const pages = [...previewRef.current.querySelectorAll<HTMLElement>(".a4-page")]; const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      for (let index = 0; index < pages.length; index++) { if (index) pdf.addPage(); const image = await toJpeg(pages[index], { pixelRatio: 2.5, quality: .96, backgroundColor: "#ffffff", skipFonts: true }); pdf.addImage(image, "JPEG", 0, 0, 210, 297, undefined, "FAST"); setProgress(15 + Math.round(((index + 1) / pages.length) * 60)); }
-      const blob = pdf.output("blob"); const filename = `proposta-${slugify(proposal.proposalNumber)}-${slugify(proposal.client.name || "cliente")}.pdf`; const path = `${user.id}/${proposal.id}/${filename}`;
-      const { error } = await supabase.storage.from("proposal-pdfs").upload(path, blob, { contentType: "application/pdf", upsert: true }); if (error) throw error;
-      patch({ pdfPath: path }); setProgress(85); await syncProposal({ ...proposal, pdfPath: path }); pdf.save(filename); setProgress(100); setNotice("PDF exportado e registrado na lista central.");
-    } catch { setNotice("Não foi possível concluir o PDF. Tente novamente."); } finally { setTimeout(() => { setExporting(false); setProgress(0); }, 600); }
+    await document.fonts.ready;
+    const images = [...document.querySelectorAll<HTMLImageElement>(".a4-document img")];
+    await Promise.all(images.map((image) => image.decode().catch(() => undefined)));
+    const previousTitle = document.title;
+    document.title = `proposta-${proposal.proposalNumber}-${proposal.client.name || "cliente"}`;
+    window.addEventListener("afterprint", () => { document.title = previousTitle; }, { once: true });
+    window.print();
   };
   const editorGroups: Record<string, React.ReactNode> = {
     "Marca": <div className="form-stack"><label>Logotipo PNG ou JPEG<span className="file-input"><Upload size={16} /> Anexar arquivo<input type="file" accept="image/png,image/jpeg" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => patch({ brand: { ...proposal.brand, logo: String(reader.result) } }); reader.readAsDataURL(file); }} /></span></label><div className="form-grid"><label>Cor principal<input type="color" value={proposal.brand.primaryColor} onChange={(e) => patch({ brand: { ...proposal.brand, primaryColor: e.target.value } })} /></label><label>Cor de apoio<input type="color" value={proposal.brand.secondaryColor} onChange={(e) => patch({ brand: { ...proposal.brand, secondaryColor: e.target.value } })} /></label></div></div>,
@@ -62,7 +59,7 @@ export default function Editor() {
     "Fechamento": <div className="form-stack"><label>Título<input value={proposal.ctaText} onChange={(e) => patch({ ctaText: e.target.value })} /></label><label>Mensagem<textarea rows={4} value={proposal.closingMessage} onChange={(e) => patch({ closingMessage: e.target.value })} /></label></div>
   };
   return <div className="editor-shell"><AppHeader /><div className="editor-toolbar"><Button variant="ghost" onClick={() => navigate("/")} icon={<ArrowLeft size={17} />}>Propostas</Button><div className="editor-title"><span>{proposal.proposalNumber}</span><b>{proposal.client.name || proposal.serviceName}</b></div><div className="mobile-toggle"><button className={mobileMode === "edit" ? "active" : ""} onClick={() => setMobileMode("edit")}><Monitor size={15} /> Editar</button><button className={mobileMode === "preview" ? "active" : ""} onClick={() => setMobileMode("preview")}><Eye size={15} /> Visualizar</button></div><div className="toolbar-actions"><Button variant="secondary" onClick={save} icon={<Save size={16} />}>Salvar</Button><Button onClick={exportPdf} icon={<Download size={16} />}>Exportar PDF</Button></div></div>{notice && <div className="toast-notice">{notice}</div>}
-  <main className="editor-main"><aside className={mobileMode === "edit" ? "editor-panel active" : "editor-panel"}><div className="editor-tabs" role="tablist">{(Object.keys(tabs) as Tab[]).map((name) => <button key={name} role="tab" aria-selected={tab === name} className={tab === name ? "active" : ""} onClick={() => setTab(name)}>{name}</button>)}</div>{tabs[tab].map((group) => <section className="editor-group" key={group}><button onClick={() => toggle(group)}><span>{group}</span>{open.includes(group) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>{open.includes(group) && <div className="editor-group__body">{editorGroups[group]}</div>}</section>)}<Button variant="danger" onClick={() => { if (confirm("Excluir esta proposta deste navegador?")) { remove(id); navigate("/"); } }} icon={<Trash2 size={16} />}>Excluir proposta</Button></aside><div className={mobileMode === "preview" ? "preview-panel active" : "preview-panel"} ref={previewRef}><ProposalPreview proposal={proposal} /></div></main>
+  <main className="editor-main"><aside className={mobileMode === "edit" ? "editor-panel active" : "editor-panel"}><div className="editor-tabs" role="tablist">{(Object.keys(tabs) as Tab[]).map((name) => <button key={name} role="tab" aria-selected={tab === name} className={tab === name ? "active" : ""} onClick={() => setTab(name)}>{name}</button>)}</div>{tabs[tab].map((group) => <section className="editor-group" key={group}><button onClick={() => toggle(group)}><span>{group}</span>{open.includes(group) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>{open.includes(group) && <div className="editor-group__body">{editorGroups[group]}</div>}</section>)}<Button variant="danger" onClick={() => { if (confirm("Excluir esta proposta deste navegador?")) { remove(id); navigate("/"); } }} icon={<Trash2 size={16} />}>Excluir proposta</Button></aside><div className={mobileMode === "preview" ? "preview-panel active" : "preview-panel"}><ProposalPreview proposal={proposal} /></div></main>
   {suggestion && <div className="modal-backdrop"><div className="suggestion-modal"><span className="eyebrow">SUGESTÃO DO ASSISTENTE</span><h2>Revise antes de aplicar</h2><textarea value={suggestion.text} onChange={(e) => setSuggestion({ ...suggestion, text: e.target.value })} rows={16} /><div><Button variant="secondary" onClick={() => setSuggestion(null)}>Descartar</Button><Button onClick={() => { patch({ [suggestion.field]: suggestion.text }); setSuggestion(null); }}>Aplicar sugestão</Button></div></div></div>}
-  {exporting && <div className="export-overlay"><Loader2 className="spin" size={28} /><b>Preparando documento</b><span>{progress}%</span><div><i style={{ width: `${progress}%` }} /></div></div>}</div>;
+  </div>;
 }
