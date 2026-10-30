@@ -1,46 +1,63 @@
 import type { Proposal } from "@/types/proposal";
-import { addDaysIso, fmtBRL, fmtDateLong, fmtDateShort } from "@/lib/proposal-utils";
+import { fmtBRL, fmtDateLong, fmtDateShort } from "@/lib/proposal-utils";
+import { A4PageWrapper, Block, Highlight, Kicker } from "@/components/proposals/document/A4Document";
 
-const lines = (value: string) => value.split("\n").filter(Boolean).map((line, index) => <p key={`${line}-${index}`}>{line}</p>);
-const Header = ({ proposal }: { proposal: Proposal }) => <div className="doc-header"><div className="doc-brand">{proposal.brand.logo ? <img src={proposal.brand.logo} alt="Logotipo Templar Engenharia" /> : <><strong>TEMPLAR</strong><span>ENGENHARIA</span></>}</div><div className="doc-meta"><b>{proposal.proposalNumber}</b><span>{fmtDateShort(proposal.emissionDate)}</span></div></div>;
-const Footer = ({ page }: { page: number }) => <div className="doc-footer"><span>www.templarengenharia.com.br • templarengenharia@hotmail.com • (21) 98180-8812</span><b>{String(page).padStart(2, "0")}</b></div>;
+const text = (value: string, fallback = "A confirmar") => value?.trim() || fallback;
+const Info = ({ label, value }: { label: string; value: string }) => <div className="border-l-2 border-doc-highlight pl-[3mm]"><span className="block text-[6pt] uppercase text-doc-muted">{label}</span><b className="mt-[1mm] block text-[7.5pt] text-doc-ink">{value}</b></div>;
 
 export function ProposalPreview({ proposal }: { proposal: Proposal }) {
-  const enabled = (id: string) => proposal.sections.find((section) => section.id === id)?.enabled;
-  const balance = proposal.pricing.totalValue * (100 - proposal.pricing.signalPercent) / 100;
-  return <div className="document-stack" style={{ "--doc-accent": proposal.brand.primaryColor, "--doc-ink": proposal.brand.secondaryColor } as React.CSSProperties}>
-    {enabled("capa") && <article className="a4-page a4-cover">
-      <Header proposal={proposal} />
-      <div className="cover-rule" />
-      <div className="cover-body"><span>PROPOSTA COMERCIAL TÉCNICA</span><h1>{proposal.cover.title}</h1><p>{proposal.property.address || "LOCAL DO SERVIÇO A CONFIRMAR"}</p></div>
-      <div className="cover-client"><span>PREPARADO PARA</span><b>{proposal.client.name || "CONTRATANTE A CONFIRMAR"}</b><small>{fmtDateLong(proposal.emissionDate)}</small></div>
-      <div className="cover-statement"><b>VERDADE TÉCNICA,</b><br />JUSTIÇA GARANTIDA.</div>
-      <Footer page={1} />
-    </article>}
-    <article className="a4-page">
-      <Header proposal={proposal} />
-      <div className="doc-content">
-        <div className="doc-kicker">IDENTIFICAÇÃO</div>
-        {enabled("responsavel") && <section><h2>Responsável técnico</h2><div className="info-grid"><div><span>Profissional</span><b>{proposal.technicalManager.name}</b></div><div><span>Qualificação</span><b>{proposal.technicalManager.title}</b></div><div><span>Registro</span><b>{proposal.technicalManager.crea}</b></div></div></section>}
-        {enabled("cliente") && <section><h2>Contratante</h2><div className="info-grid"><div><span>Nome / razão social</span><b>{proposal.client.name || "A confirmar"}</b></div><div><span>CPF / CNPJ</span><b>{proposal.client.document || "A confirmar"}</b></div><div><span>Contato</span><b>{proposal.client.phone || proposal.client.email || "A confirmar"}</b></div></div></section>}
-        {enabled("objeto") && <section><h2>Objeto da proposta</h2><p>{proposal.property.address || "Endereço a confirmar"}{proposal.property.complement ? ` — ${proposal.property.complement}` : ""}</p><p>{proposal.property.description || "Descrição do imóvel e do objeto a confirmar."}</p></section>}
-        {enabled("servico") && <section><h2>Serviço técnico</h2><h3>{proposal.serviceName}</h3></section>}
-        {enabled("objetivo") && <section><h2>Objetivo</h2>{lines(proposal.scopeObjective)}</section>}
-      </div><Footer page={2} />
-    </article>
-    <article className="a4-page">
-      <Header proposal={proposal} /><div className="doc-content"><div className="doc-kicker">ESCOPO TÉCNICO</div>
-        {enabled("itensConstantes") && <section><h2>Itens constantes</h2>{lines(proposal.scopeItems)}</section>}
-        {enabled("metodologia") && <section><h2>Metodologia</h2>{lines(proposal.methodology)}</section>}
-        {enabled("entregaveis") && <section><h2>Entregáveis</h2>{lines(proposal.deliverables)}</section>}
-        {enabled("naoIncluido") && <section><h2>Não incluído</h2>{lines(proposal.notIncluded)}<div className="doc-note">{proposal.commonExclusions}</div></section>}
-      </div><Footer page={3} />
-    </article>
-    <article className="a4-page">
-      <Header proposal={proposal} /><div className="doc-content"><div className="doc-kicker">INVESTIMENTO</div>
-        {enabled("valores") && <section><h2>Valores e condições</h2><div className="price-block"><span>Investimento total</span><strong>{fmtBRL(proposal.pricing.totalValue)}</strong></div><div className="payment-grid"><div><span>No aceite para agendamento</span><b>{proposal.pricing.signalPercent}% — {fmtBRL(proposal.pricing.totalValue * proposal.pricing.signalPercent / 100)}</b></div><div><span>Na entrega do laudo</span><b>{100 - proposal.pricing.signalPercent}% — {fmtBRL(balance)}</b></div></div><p>Proposta válida por {proposal.pricing.validityDays} dias, até {fmtDateShort(addDaysIso(proposal.emissionDate, proposal.pricing.validityDays))}. Prazo de execução: {proposal.pricing.executionDays ? `${proposal.pricing.executionDays} dias` : "a confirmar após o aceite"}.</p></section>}
-        {enabled("fechamento") && <section className="closing"><h2>{proposal.ctaText}</h2><p>{proposal.closingMessage}</p><div className="signatures"><div><span>Contratante</span></div><div><span>{proposal.technicalManager.name}<br />{proposal.technicalManager.crea}</span></div></div></section>}
-      </div><Footer page={4} />
-    </article>
+  const { client, scope, commercial, operational } = proposal;
+  const address = [client.street, client.neighborhood, client.city].filter(Boolean).join(", ") || proposal.property.address;
+  return <div className="document-stack">
+    <A4PageWrapper proposal={proposal} page={1} bare>
+      <div className="absolute left-[18mm] top-[22mm] h-[2mm] w-[22mm] bg-doc-highlight" />
+      <div className="absolute left-[18mm] right-[25mm] top-[50mm]">
+        <span className="font-mono text-[7pt] tracking-[2px] text-doc-muted">PROPOSTA COMERCIAL TÉCNICA</span>
+        <h1 className="my-[7mm] text-[34pt] font-bold leading-[1.06]">{proposal.cover.title}</h1>
+        <p className="text-[9pt] text-doc-muted">{address || "LOCAL DO SERVIÇO A CONFIRMAR"}</p>
+      </div>
+      <div className="absolute left-[18mm] top-[160mm] border-l-2 border-doc-highlight pl-[5mm]"><span className="block text-[6pt] text-doc-muted">PREPARADO PARA</span><b className="my-[2mm] block text-[11pt]">{client.name || "CONTRATANTE A CONFIRMAR"}</b><small className="text-[7pt]">{fmtDateLong(proposal.emissionDate)}</small></div>
+      <div className="absolute bottom-[18mm] right-[18mm] text-right font-serif text-[17pt] text-doc-muted"><b className="text-doc-ink">VERDADE TÉCNICA,</b><br />JUSTIÇA GARANTIDA.</div>
+    </A4PageWrapper>
+
+    <A4PageWrapper proposal={proposal} page={2}>
+      <Kicker>IDENTIFICAÇÃO</Kicker>
+      <Block title="Contratante"><div className="grid grid-cols-3 gap-[3mm]"><Info label="Nome / razão social" value={text(client.name)} /><Info label="CPF / CNPJ" value={text(client.document)} /><Info label="Contato" value={text(client.phone || client.email)} /></div><div className="mt-[4mm]"><Info label="Endereço" value={text(address)} /></div></Block>
+      <Block title="Responsável técnico"><div className="grid grid-cols-3 gap-[3mm]"><Info label="Engenheiro" value={text(operational.engineer)} /><Info label="Função" value={text(operational.role)} /><Info label="CREA" value={text(operational.crea)} /></div></Block>
+      <Block title="Resumo do objeto"><Highlight>{text(scope.objectSummary || proposal.property.description, "Descrição do objeto a confirmar.")}</Highlight></Block>
+    </A4PageWrapper>
+
+    <A4PageWrapper proposal={proposal} page={3}>
+      <Kicker>ESCOPO</Kicker>
+      <Block title="Objetivo">{proposal.scopeObjective}</Block>
+      <Block title="Área e trechos"><p>Área da intervenção: <span className="doc-hl font-semibold">{scope.interventionArea ? `${scope.interventionArea} m²` : "a confirmar"}</span></p><p>{text(scope.sectionsToEvaluate, "Trechos específicos a confirmar.")}</p></Block>
+      {scope.floorPlanImages.length > 0 && <Block title="Plantas"><div className="grid grid-cols-2 gap-[4mm]">{scope.floorPlanImages.slice(0, 4).map((src, i) => <img key={i} src={src} alt={`Planta ${i + 1}`} className="h-[55mm] w-full border border-doc-line object-contain" />)}</div></Block>}
+    </A4PageWrapper>
+
+    <A4PageWrapper proposal={proposal} page={4}>
+      <Kicker>METODOLOGIA</Kicker>
+      <Block title="Itens constantes">{proposal.scopeItems}</Block>
+      <Block title="Metodologia">{proposal.methodology}</Block>
+      <Block title="Documentos fornecidos"><Highlight>{text(scope.providedDocuments, "Nenhum documento informado.")}</Highlight></Block>
+    </A4PageWrapper>
+
+    <A4PageWrapper proposal={proposal} page={5}>
+      <Kicker>ENTREGAS E LIMITES</Kicker>
+      <Block title="Entregáveis">{proposal.deliverables}</Block>
+      <Block title="Não incluído">{proposal.notIncluded}<div className="mt-[4mm]"><Highlight>{proposal.commonExclusions}</Highlight></div></Block>
+    </A4PageWrapper>
+
+    <A4PageWrapper proposal={proposal} page={6}>
+      <Kicker>INVESTIMENTO</Kicker>
+      <div className="bg-doc-ink p-[8mm]"><span className="block text-[7pt] uppercase text-doc-paper">Investimento total</span><strong className="mt-[2mm] block text-[26pt] text-doc-highlight">{fmtBRL(commercial.totalValue)}</strong></div>
+      <div className="my-[5mm] grid grid-cols-2 gap-[4mm] text-[7.5pt]">
+        <Highlight><span className="block text-doc-muted">Parcelamento</span><b>{text(commercial.installmentModel)}</b></Highlight>
+        <Highlight><span className="block text-doc-muted">Prazo de entrega</span><b>{text(commercial.deliveryDeadline)}</b></Highlight>
+        <Highlight><span className="block text-doc-muted">Validade</span><b>{commercial.validUntil ? fmtDateShort(commercial.validUntil) : "A confirmar"}</b></Highlight>
+        <Highlight><span className="block text-doc-muted">Vistorias</span><b>{commercial.inspectionCount || "A confirmar"}</b></Highlight>
+      </div>
+      <Block title={proposal.ctaText}>{proposal.closingMessage}</Block>
+      <div className="mt-[22mm] grid grid-cols-2 gap-[15mm] text-center text-[7pt]"><div className="border-t border-doc-text pt-[3mm]">Contratante</div><div className="border-t border-doc-text pt-[3mm]">{operational.engineer}<br />{operational.crea}</div></div>
+    </A4PageWrapper>
   </div>;
 }
