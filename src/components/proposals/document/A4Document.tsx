@@ -19,9 +19,10 @@ export function DocumentFooter({ proposal }: { proposal: Proposal }) {
 /** One flowing document; physical pages are created by the browser's print engine. */
 export function A4PageWrapper({ proposal, children }: { proposal: Proposal; children: ReactNode }) {
   return <article className="a4-document bg-doc-paper text-doc-ink">
-    <DocumentHeader proposal={proposal} />
-    <div className="document-content text-doc-text">{children}</div>
-    <DocumentFooter proposal={proposal} />
+    <table className="document-flow-table"><thead><tr><td><DocumentHeader proposal={proposal} /></td></tr></thead>
+      <tbody><tr><td><div className="document-content text-doc-text">{children}</div></td></tr></tbody>
+      <tfoot><tr><td><DocumentFooter proposal={proposal} /></td></tr></tfoot>
+    </table>
   </article>;
 }
 
