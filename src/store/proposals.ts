@@ -19,6 +19,7 @@ const emptyScope = () => ({ floorPlanImages: [] as string[], interventionArea: 0
 /** Completa propostas antigas com os campos do Pitch Deck. */
 export const normalizeProposal = (p: Proposal): Proposal => ({
   ...p,
+  revision: p.revision ?? "R00",
   client: { ...emptyClient(), ...p.client },
   scope: { ...emptyScope(), ...p.scope },
   commercial: { totalValue: p.pricing?.totalValue ?? 0, installmentModel: "50/50", deliveryDeadline: p.pricing?.executionDays ? `${p.pricing.executionDays} dias` : "", validUntil: addDaysIso(p.emissionDate, p.pricing?.validityDays ?? 10), inspectionCount: 1, ...p.commercial },
@@ -29,7 +30,7 @@ const buildProposal = (serviceKey: ServiceKey): Proposal => {
   const template = serviceTemplates.find((item) => item.key === serviceKey) ?? serviceTemplates[13];
   const now = new Date().toISOString();
   return {
-    id: nanoid(12), createdAt: now, updatedAt: now, proposalNumber: nextNumber(), emissionDate: todayIso(),
+    id: nanoid(12), createdAt: now, updatedAt: now, proposalNumber: nextNumber(), revision: "R00", emissionDate: todayIso(),
     serviceKey: template.key, serviceName: template.name, status: "Rascunho",
     brand: { logo: useSettingsStore.getState().defaultLogo, primaryColor: "#b08d57", secondaryColor: "#20262d" },
     technicalManager: { name: "Vinicius Cesar", title: "Engenheiro Civil", crea: "CREA-RJ 2024100977" },
@@ -68,4 +69,4 @@ export const useProposalStore = create<ProposalState>()(persist((set, get) => ({
   remove: (id) => set((state) => ({ proposals: state.proposals.filter((proposal) => proposal.id !== id) })),
   applyDefaultLogo: (logo) => set((state) => ({ proposals: state.proposals.map((proposal) => ({ ...proposal, brand: { ...proposal.brand, logo }, updatedAt: new Date().toISOString() })) })),
   get: (id) => get().proposals.find((proposal) => proposal.id === id),
-}), { name: "templar-proposals-v1", version: 2, migrate: (state) => { const s = state as { proposals?: Proposal[] }; return { ...s, proposals: (s.proposals ?? []).map(normalizeProposal) } as ProposalState; } }));
+}), { name: "templar-proposals-v1", version: 3, migrate: (state) => { const s = state as { proposals?: Proposal[] }; return { ...s, proposals: (s.proposals ?? []).map(normalizeProposal) } as ProposalState; } }));

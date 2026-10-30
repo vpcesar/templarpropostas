@@ -11,7 +11,7 @@ export type ProposalStatus = "Rascunho" | "Enviada" | "Aprovada" | "Recusada";
 
 export interface ProposalSection { id: SectionId; label: string; enabled: boolean }
 export interface Proposal {
-  id: string; createdAt: string; updatedAt: string; proposalNumber: string; emissionDate: string;
+  id: string; createdAt: string; updatedAt: string; proposalNumber: string; revision: string; emissionDate: string;
   serviceKey: ServiceKey; serviceName: string; status: ProposalStatus;
   brand: { logo?: string; primaryColor: string; secondaryColor: string };
   technicalManager: { name: string; title: string; crea: string };
