@@ -3,6 +3,7 @@ import type { Proposal, SectionId } from "@/types/proposal";
 import { fmtBRL, fmtDateShort } from "@/lib/proposal-utils";
 import { A4PageWrapper, Block, Highlight } from "@/components/proposals/document/A4Document";
 import { ProposalCover } from "@/components/proposals/document/ProposalCover";
+import { ProposalContext } from "@/components/proposals/document/ProposalContext";
 import { visibleSections } from "@/lib/document-sections";
 
 const text = (value: string, fallback = "A confirmar") => value?.trim() || fallback;
@@ -15,7 +16,7 @@ export function ProposalPreview({ proposal }: { proposal: Proposal }) {
     capa: <ProposalCover proposal={proposal} />,
     responsavel: <Block title="Responsável técnico"><div className="grid grid-cols-3 gap-[3mm]"><Info label="Engenheiro" value={text(operational.engineer)} /><Info label="Função" value={text(operational.role)} /><Info label="CREA" value={text(operational.crea)} /></div></Block>,
     cliente: <Block title="Contratante"><div className="grid grid-cols-3 gap-[3mm]"><Info label="Nome / razão social" value={text(client.name)} /><Info label="CPF / CNPJ" value={text(client.document)} /><Info label="Contato" value={text(client.phone || client.email)} /></div><div className="mt-[4mm]"><Info label="Endereço" value={text(address)} /></div></Block>,
-    objeto: <Block title="Objeto e área da intervenção"><Highlight>{text(scope.objectSummary || proposal.property.description, "Descrição do objeto a confirmar.")}</Highlight><p className="mt-[4mm]">Área da intervenção: <span className="doc-hl font-semibold">{scope.interventionArea ? `${scope.interventionArea} m²` : "a confirmar"}</span></p><p>{text(scope.sectionsToEvaluate, "Trechos específicos a confirmar.")}</p>{scope.floorPlanImages.length > 0 && <div className="mt-[4mm] grid grid-cols-2 gap-[4mm]">{scope.floorPlanImages.map((src, i) => <img key={i} src={src} alt={`Planta ${i + 1}`} className="h-[55mm] w-full border border-doc-line object-contain" />)}</div>}</Block>,
+    objeto: <ProposalContext proposal={proposal} />,
     servico: <Block title="Serviço">{proposal.serviceName}</Block>,
     objetivo: <Block title="Objetivo">{proposal.scopeObjective}</Block>,
     itensConstantes: <Block title="Itens constantes">{proposal.scopeItems}</Block>,

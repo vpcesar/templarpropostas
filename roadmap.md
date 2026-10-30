@@ -12,3 +12,4 @@
 - [x] Alinhar documentação, dependências e funções ao fluxo do Gerador de Propostas Comerciais.
 - [x] Restaurar documento contínuo, visibilidade e ordem das seções, impressão A4 dinâmica e cabeçalho/rodapé repetidos.
 - [x] Construir capa com planta, objeto e indicadores de investimento, vistoria, entrega e área indicada.
+- [x] Estilizar Contexto com resumo em três colunas, premissa técnica e tabela de informações disponíveis.
